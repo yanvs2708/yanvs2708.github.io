@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PixelGames — Aprenda a Criar Games</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #050810;
+      --bg2: #080d1a;
+      --neon-cyan: #00f5ff;
+      --neon-pink: #ff00c8;
+      --neon-yellow: #ffe600;
+      --neon-green: #00ff88;
+      --text: #e8f0ff;
+      --text-dim: #8899cc;
+      --card-bg: rgba(255,255,255,0.03);
+      --border: rgba(0,245,255,0.15);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 18px;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* CURSOR */
+    #cursor {
+      width: 16px; height: 16px;
+      border: 2px solid var(--neon-cyan);
+      border-radius: 0;
+      position: fixed; top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.05s, background 0.2s, border-color 0.2s;
+      mix-blend-mode: screen;
+    }
+    #cursor-trail {
+      width: 40px; height: 40px;
+      border: 1px solid rgba(0,245,255,0.3);
+      border-radius: 0;
+      position: fixed; top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: left 0.12s ease, top 0.12s ease;
+    }
+    body:hover { cursor: none; }
+
+    /* GRID BG */
+    .grid-bg {
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(0,245,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,245,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .grid-bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(0,245,255,0.08) 0%, transparent 60%),
+                  radial-gradient(ellipse at 100% 80%, rgba(255,0,200,0.06) 0%, transparent 50%);
+    }
+
+    /* SCANLINES */
+    .scanlines {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent, transparent 2px,
+        rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
+      );
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 60px;
+      background: rgba(5,8,16,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 20px var(--neon-cyan), 0 0 40px rgba(0,245,255,0.4);
+      letter-spacing: 2px;
+      text-decoration: none;
+    }
+    .logo span { color: var(--neon-pink); text-shadow: 0 0 20px var(--neon-pink); }
+
+    .nav-links { display: flex; gap: 36px; list-style: none; }
+    .nav-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute; bottom: -4px; left: 0; right: 0; height: 2px;
+      background: var(--neon-cyan);
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.3s;
+    }
+    .nav-links a:hover { color: var(--neon-cyan); }
+    .nav-links a:hover::after { transform: scaleX(1); }
+
+    .nav-cta {
+      background: transparent;
+      border: 2px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      padding: 10px 24px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+    }
+    .nav-cta:hover {
+      background: var(--neon-cyan);
+      color: var(--bg);
+      box-shadow: 0 0 30px rgba(0,245,255,0.5);
+    }
+
+    /* HERO */
+    #hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      padding: 120px 40px 80px;
+    }
+
+    .hero-inner { max-width: 900px; }
+
+    .hero-badge {
+      display: inline-block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: var(--neon-yellow);
+      border: 1px solid var(--neon-yellow);
+      padding: 8px 16px;
+      letter-spacing: 2px;
+      margin-bottom: 32px;
+      animation: blink-border 2s infinite;
+    }
+    @keyframes blink-border {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
+
+    .hero-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(3rem, 8vw, 7rem);
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 24px;
+      letter-spacing: -2px;
+    }
+    .hero-title .line1 { display: block; color: var(--text); }
+    .hero-title .line2 {
+      display: block;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 40px rgba(0,245,255,0.6), 0 0 80px rgba(0,245,255,0.3);
+    }
+    .hero-title .line3 {
+      display: block;
+      color: var(--neon-pink);
+      text-shadow: 0 0 40px rgba(255,0,200,0.6);
+    }
+
+    .hero-sub {
+      font-size: 20px;
+      color: var(--text-dim);
+      max-width: 600px;
+      margin: 0 auto 48px;
+      line-height: 1.7;
+      font-weight: 600;
+    }
+
+    .hero-btns { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+
+    .btn-primary {
+      background: var(--neon-cyan);
+      color: var(--bg);
+      border: none;
+      padding: 18px 40px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+      clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+    }
+    .btn-primary:hover {
+      background: #fff;
+      box-shadow: 0 0 40px rgba(0,245,255,0.8);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 2px solid rgba(255,255,255,0.2);
+      padding: 18px 40px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-secondary:hover {
+      border-color: var(--neon-pink);
+      color: var(--neon-pink);
+      box-shadow: 0 0 20px rgba(255,0,200,0.3);
+    }
+
+    /* STATS */
+    .stats-bar {
+      position: relative; z-index: 2;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,245,255,0.03);
+      padding: 30px 60px;
+      display: flex; justify-content: center; gap: 80px; flex-wrap: wrap;
+    }
+    .stat { text-align: center; }
+    .stat-number {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 20px rgba(0,245,255,0.5);
+      display: block;
+    }
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    /* SECTIONS */
+    section { position: relative; z-index: 2; }
+
+    .section-header { text-align: center; margin-bottom: 64px; }
+    .section-tag {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: var(--neon-pink);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    /* CURSOS */
+    #cursos { padding: 100px 60px; }
+    .cursos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .curso-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s;
+      cursor: pointer;
+    }
+    .curso-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--accent);
+      box-shadow: 0 0 20px var(--accent);
+    }
+    .curso-card::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(var(--accent-rgb),0.08) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .curso-card:hover { border-color: var(--accent); transform: translateY(-6px); }
+    .curso-card:hover::after { opacity: 1; }
+
+    .curso-card[data-accent="cyan"] { --accent: #00f5ff; --accent-rgb: 0,245,255; }
+    .curso-card[data-accent="pink"] { --accent: #ff00c8; --accent-rgb: 255,0,200; }
+    .curso-card[data-accent="yellow"] { --accent: #ffe600; --accent-rgb: 255,230,0; }
+    .curso-card[data-accent="green"] { --accent: #00ff88; --accent-rgb: 0,255,136; }
+    .curso-card[data-accent="purple"] { --accent: #bb77ff; --accent-rgb: 187,119,255; }
+    .curso-card[data-accent="orange"] { --accent: #ff7700; --accent-rgb: 255,119,0; }
+
+    .curso-icon {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      display: block;
+      filter: drop-shadow(0 0 10px var(--accent));
+    }
+    .curso-nivel {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--accent);
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+    .curso-nome {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .curso-desc {
+      color: var(--text-dim);
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .curso-meta {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px;
+    }
+    .curso-duracao { font-size: 13px; color: var(--text-dim); letter-spacing: 1px; }
+    .curso-preco {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: var(--accent);
+    }
+    .curso-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 12px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .curso-btn:hover {
+      background: var(--accent);
+      color: var(--bg);
+      box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.5);
+    }
+
+    /* POR QUE */
+    #porque { padding: 100px 60px; background: linear-gradient(180deg, transparent 0%, rgba(0,245,255,0.02) 50%, transparent 100%); }
+    .porque-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 32px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .porque-item {
+      text-align: center;
+      padding: 40px 24px;
+      border: 1px solid transparent;
+      transition: all 0.4s;
+    }
+    .porque-item:hover {
+      border-color: var(--border);
+      background: var(--card-bg);
+    }
+    .porque-icon-wrap {
+      width: 72px; height: 72px;
+      border: 2px solid var(--neon-cyan);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 2rem;
+      transition: all 0.4s;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      background: rgba(0,245,255,0.05);
+    }
+    .porque-item:hover .porque-icon-wrap {
+      background: rgba(0,245,255,0.1);
+      box-shadow: 0 0 30px rgba(0,245,255,0.3);
+    }
+    .porque-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .porque-text { color: var(--text-dim); font-size: 15px; line-height: 1.7; }
+
+    /* TRILHAS */
+    #trilhas { padding: 100px 60px; }
+    .trilhas-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .trilha-item {
+      display: flex; align-items: center; gap: 24px;
+      padding: 28px 32px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      transition: all 0.3s;
+      cursor: pointer;
+      position: relative;
+    }
+    .trilha-item:hover { border-color: var(--neon-pink); padding-left: 48px; }
+    .trilha-item::after {
+      content: '▶';
+      position: absolute; right: 32px;
+      color: var(--neon-pink);
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .trilha-item:hover::after { opacity: 1; }
+    .trilha-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: var(--neon-pink);
+      min-width: 30px;
+    }
+    .trilha-info { flex: 1; }
+    .trilha-nome {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .trilha-desc { color: var(--text-dim); font-size: 14px; }
+    .trilha-badge {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      padding: 6px 10px;
+      border: 1px solid;
+      letter-spacing: 1px;
+    }
+    .trilha-badge.verde { color: var(--neon-green); border-color: var(--neon-green); }
+    .trilha-badge.amarelo { color: var(--neon-yellow); border-color: var(--neon-yellow); }
+    .trilha-badge.vermelho { color: var(--neon-pink); border-color: var(--neon-pink); }
+
+    /* DEPOIMENTOS */
+    #depoimentos { padding: 100px 60px; }
+    .depo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .depo-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 32px;
+      position: relative;
+    }
+    .depo-card::before {
+      content: '"';
+      position: absolute; top: 16px; left: 24px;
+      font-size: 5rem;
+      color: var(--neon-cyan);
+      opacity: 0.1;
+      font-family: Georgia, serif;
+      line-height: 1;
+    }
+    .depo-text {
+      color: var(--text-dim);
+      font-size: 16px;
+      line-height: 1.7;
+      margin-bottom: 24px;
+      font-style: italic;
+    }
+    .depo-autor { display: flex; align-items: center; gap: 12px; }
+    .depo-avatar {
+      width: 44px; height: 44px;
+      border-radius: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+      background: rgba(0,245,255,0.1);
+      border: 1px solid var(--border);
+    }
+    .depo-nome { font-weight: 700; font-size: 15px; }
+    .depo-cargo { color: var(--text-dim); font-size: 13px; }
+
+    /* CTA */
+    #cta {
+      padding: 120px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    #cta::before {
+      content: '';
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(0,245,255,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 900;
+      margin-bottom: 24px;
+    }
+    .cta-title span { color: var(--neon-cyan); text-shadow: 0 0 40px rgba(0,245,255,0.5); }
+    .cta-sub { color: var(--text-dim); font-size: 20px; margin-bottom: 48px; }
+    .cta-form {
+      display: flex; gap: 0; max-width: 520px; margin: 0 auto;
+    }
+    .cta-input {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-right: none;
+      padding: 16px 24px;
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .cta-input:focus { border-color: var(--neon-cyan); }
+    .cta-input::placeholder { color: var(--text-dim); }
+    .cta-submit {
+      background: var(--neon-cyan);
+      color: var(--bg);
+      border: none;
+      padding: 16px 28px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
+      letter-spacing: 2px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .cta-submit:hover { background: #fff; box-shadow: 0 0 30px rgba(0,245,255,0.6); }
+
+    /* FOOTER */
+    footer {
+      position: relative; z-index: 2;
+      border-top: 1px solid var(--border);
+      padding: 60px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 24px;
+    }
+    .footer-logo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 20px var(--neon-cyan);
+      text-decoration: none;
+    }
+    .footer-logo span { color: var(--neon-pink); }
+    .footer-links { display: flex; gap: 32px; }
+    .footer-links a { color: var(--text-dim); text-decoration: none; font-size: 14px; font-weight: 600; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--neon-cyan); }
+    .footer-copy { color: var(--text-dim); font-size: 13px; }
+
+    /* PIXEL STARS */
+    .stars-canvas {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    }
+
+    /* GLITCH */
+    @keyframes glitch {
+      0%, 95%, 100% { clip-path: inset(0); transform: none; }
+      96% { clip-path: inset(20% 0 60% 0); transform: translateX(-4px); }
+      97% { clip-path: inset(60% 0 10% 0); transform: translateX(4px); }
+      98% { clip-path: inset(40% 0 40% 0); transform: translateX(-2px); }
+      99% { clip-path: inset(0); transform: none; }
+    }
+    .glitch { animation: glitch 6s infinite; }
+
+    /* SCROLL FADE */
+    .fade-in { opacity: 0; transform: translateY(30px); transition: all 0.7s ease; }
+    .fade-in.visible { opacity: 1; transform: none; }
+
+    /* PIXEL DECORATION */
+    .pixel-deco {
+      position: absolute;
+      width: 8px; height: 8px;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 10px var(--neon-cyan);
+      animation: pixel-float 4s ease-in-out infinite;
+    }
+    @keyframes pixel-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+      #cursos, #porque, #trilhas, #depoimentos, #cta { padding: 60px 24px; }
+      .stats-bar { padding: 24px; gap: 40px; }
+      footer { padding: 40px 24px; flex-direction: column; text-align: center; }
+      .cta-form { flex-direction: column; }
+      .cta-input { border-right: 1px solid var(--border); border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-trail"></div>
+<canvas class="stars-canvas" id="stars"></canvas>
+<div class="grid-bg"></div>
+<div class="scanlines"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">PIXEL<span>GAMES</span></a>
+  <ul class="nav-links">
+    <li><a href="#cursos">Cursos</a></li>
+    <li><a href="#porque">Por que nós</a></li>
+    <li><a href="#trilhas">Trilhas</a></li>
+    <li><a href="#depoimentos">Alunos</a></li>
+  </ul>
+  <a href="#cta" class="nav-cta">Começar agora</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">⚡ NOVA TURMA ABERTA — 2025</div>
+    <h1 class="hero-title">
+      <span class="line1">TRANSFORME SUA</span>
+      <span class="line2 glitch">PAIXÃO POR GAMES</span>
+      <span class="line3">EM CARREIRA</span>
+    </h1>
+    <p class="hero-sub">
+      Aprenda a criar jogos do zero com os melhores instrutores do Brasil.
+      Unity, Unreal, Godot, pixel art e muito mais — tudo na palma da mão.
+    </p>
+    <div class="hero-btns">
+      <a href="#cursos" class="btn-primary">Ver cursos</a>
+      <a href="#porque" class="btn-secondary">Saiba mais</a>
+    </div>
+  </div>
+
+  <!-- floating pixels -->
+  <div class="pixel-deco" style="top:20%;left:10%;animation-delay:0s;"></div>
+  <div class="pixel-deco" style="top:60%;left:5%;background:var(--neon-pink);box-shadow:0 0 10px var(--neon-pink);animation-delay:1s;"></div>
+  <div class="pixel-deco" style="top:30%;right:8%;background:var(--neon-yellow);box-shadow:0 0 10px var(--neon-yellow);animation-delay:2s;"></div>
+  <div class="pixel-deco" style="top:70%;right:12%;background:var(--neon-green);box-shadow:0 0 10px var(--neon-green);animation-delay:0.5s;"></div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat">
+    <span class="stat-number" data-target="12400">0</span>
+    <span class="stat-label">Alunos formados</span>
+  </div>
+  <div class="stat">
+    <span class="stat-number" data-target="48">0</span>
+    <span class="stat-label">Cursos disponíveis</span>
+  </div>
+  <div class="stat">
+    <span class="stat-number" data-target="98">0</span>
+    <span class="stat-label">% de aprovação</span>
+  </div>
+  <div class="stat">
+    <span class="stat-number" data-target="6">0</span>
+    <span class="stat-label">Anos de experiência</span>
+  </div>
+</div>
+
+<!-- CURSOS -->
+<section id="cursos">
+  <div class="section-header fade-in">
+    <span class="section-tag">// nossos cursos</span>
+    <h2 class="section-title">Escolha sua aventura</h2>
+  </div>
+
+  <div class="cursos-grid">
+    <div class="curso-card fade-in" data-accent="cyan">
+      <span class="curso-icon">🎮</span>
+      <div class="curso-nivel">INICIANTE</div>
+      <div class="curso-nome">Unity para Iniciantes</div>
+      <p class="curso-desc">Do zero ao seu primeiro game 2D com C# e Unity. Crie plataformers, puzzles e runners completos.</p>
+      <div class="curso-meta">
+        <span class="curso-duracao">⏱ 40 horas</span>
+        <span class="curso-preco">R$149</span>
+      </div>
+      <button class="curso-btn">Começar curso</button>
+    </div>
+
+    <div class="curso-card fade-in" data-accent="pink">
+      <span class="curso-icon">🔥</span>
+      <div class="curso-nivel">INTERMEDIÁRIO</div>
+      <div class="curso-nome">Unreal Engine 5</div>
+      <p class="curso-desc">Crie games 3D de tirar o fôlego com Blueprints e C++. Iluminação Lumen, Nanite e muito mais.</p>
+      <div class="curso-meta">
+        <span class="curso-duracao">⏱ 80 horas</span>
+        <span class="curso-preco">R$299</span>
+      </div>
+      <button class="curso-btn">Começar curso</button>
+    </div>
+
+    <div class="curso-card fade-in" data-accent="yellow">
+      <span class="curso-icon">🎨</span>
+      <div class="curso-nivel">TODOS OS NÍVEIS</div>
+      <div class="curso-nome">Pixel Art Completo</div>
+      <p class="curso-desc">Domine a arte de sprites, tiles e animações. Crie personagens e cenários incríveis do zero.</p>
+      <div class="curso-meta">
+        <span class="curso-duracao">⏱ 35 horas</span>
+        <span class="curso-preco">R$99</span>
+      </div>
+      <button class="curso-btn">Começar curso</button>
+    </div>
+
+    <div class="curso-card fade-in" data-accent="green">
+      <span class="curso-icon">⚡</span>
+      <div class="curso-nivel">INICIANTE</div>
+      <div class="curso-nome">Godot 4 do Zero</div>
+      <p class="curso-desc">A engine open-source mais poderosa do mercado. GDScript simples, resultados profissionais.</p>
+      <div class="curso-meta">
+        <span class="curso-duracao">⏱ 50 horas</span>
+        <span class="curso-preco">R$129</span>
+      </div>
+      <button class="curso-btn">Começar curso</button>
+    </div>
+
+    <div class="curso-card fade-in" data-accent="purple">
+      <span class="curso-icon">🎵</span>
+      <div class="curso-nivel">INTERMEDIÁRIO</div>
+      <div class="curso-nome">Sound Design para Games</div>
+      <p class="curso-desc">Crie trilhas sonoras e efeitos que imergem o jogador. Do Audacity ao Wwise profissional.</p>
+      <div class="curso-meta">
+        <span class="curso-duracao">⏱ 30 horas</span>
+        <span class="curso-preco">R$119</span>
+      </div>
+      <button class="curso-btn">Começar curso</button>
+    </div>
+
+    <div class="curso-card fade-in" data-accent="orange">
+      <span class="curso-icon">🚀</span>
+      <div class="curso-nivel">AVANÇADO</div>
+      <div class="curso-nome">Publicar na Steam</div>
+      <p class="curso-desc">Tudo sobre publicação, marketing, press kits e monetização. Transforme seu jogo em renda.</p>
+      <div class="curso-meta">
+        <span class="curso-duracao">⏱ 20 horas</span>
+        <span class="curso-preco">R$89</span>
+      </div>
+      <button class="curso-btn">Começar curso</button>
+    </div>
+  </div>
+</section>
+
+<!-- POR QUE -->
+<section id="porque">
+  <div class="section-header fade-in">
+    <span class="section-tag">// diferenciais</span>
+    <h2 class="section-title">Por que a PixelGames?</h2>
+  </div>
+
+  <div class="porque-grid">
+    <div class="porque-item fade-in">
+      <div class="porque-icon-wrap">🏆</div>
+      <div class="porque-title">Instrutores do mercado</div>
+      <p class="porque-text">Aprenda com devs que lançaram games na Steam, Epic e consoles. Experiência real, não teoria.</p>
+    </div>
+    <div class="porque-item fade-in">
+      <div class="porque-icon-wrap">♾️</div>
+      <div class="porque-title">Acesso vitalício</div>
+      <p class="porque-text">Comprou uma vez, é seu para sempre. Todas as atualizações inclusas sem custo adicional.</p>
+    </div>
+    <div class="porque-item fade-in">
+      <div class="porque-icon-wrap">🤝</div>
+      <div class="porque-title">Comunidade ativa</div>
+      <p class="porque-text">Discord exclusivo com +12 mil membros. Feedback, parceiros e amizades que duram a vida toda.</p>
+    </div>
+    <div class="porque-item fade-in">
+      <div class="porque-icon-wrap">📱</div>
+      <div class="porque-title">Aprenda em qualquer lugar</div>
+      <p class="porque-text">Plataforma responsiva para desktop, tablet e celular. Sem Wi-Fi? Baixe as aulas e assista offline.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TRILHAS -->
+<section id="trilhas">
+  <div class="section-header fade-in">
+    <span class="section-tag">// trilhas de aprendizado</span>
+    <h2 class="section-title">Escolha seu caminho</h2>
+  </div>
+
+  <div class="trilhas-inner">
+    <div class="trilha-item fade-in">
+      <span class="trilha-num">01</span>
+      <div class="trilha-info">
+        <div class="trilha-nome">Desenvolvedor Indie Completo</div>
+        <div class="trilha-desc">Do conceito ao lançamento — arte, código, som e marketing em uma trilha só.</div>
+      </div>
+      <span class="trilha-badge verde">INICIANTE</span>
+    </div>
+    <div class="trilha-item fade-in">
+      <span class="trilha-num">02</span>
+      <div class="trilha-info">
+        <div class="trilha-nome">Game Programmer Profissional</div>
+        <div class="trilha-desc">C#, C++, padrões de design, otimização e arquitetura de jogos AAA.</div>
+      </div>
+      <span class="trilha-badge amarelo">INTERMEDIÁRIO</span>
+    </div>
+    <div class="trilha-item fade-in">
+      <span class="trilha-num">03</span>
+      <div class="trilha-info">
+        <div class="trilha-nome">Game Designer Criativo</div>
+        <div class="trilha-desc">Level design, balanceamento, narrativa e psicologia do jogador.</div>
+      </div>
+      <span class="trilha-badge verde">INICIANTE</span>
+    </div>
+    <div class="trilha-item fade-in">
+      <span class="trilha-num">04</span>
+      <div class="trilha-info">
+        <div class="trilha-nome">Especialista em Jogos Mobile</div>
+        <div class="trilha-desc">Unity para Android e iOS, monetização, anúncios e publicação nas lojas.</div>
+      </div>
+      <span class="trilha-badge amarelo">INTERMEDIÁRIO</span>
+    </div>
+    <div class="trilha-item fade-in">
+      <span class="trilha-num">05</span>
+      <div class="trilha-info">
+        <div class="trilha-nome">Multiplayer & Netcode Avançado</div>
+        <div class="trilha-desc">Mirror, Photon, servidores dedicados, lag compensation e sincronização em tempo real.</div>
+      </div>
+      <span class="trilha-badge vermelho">AVANÇADO</span>
+    </div>
+  </div>
+</section>
+
+<!-- DEPOIMENTOS -->
+<section id="depoimentos">
+  <div class="section-header fade-in">
+    <span class="section-tag">// depoimentos</span>
+    <h2 class="section-title">O que dizem nossos alunos</h2>
+  </div>
+
+  <div class="depo-grid">
+    <div class="depo-card fade-in">
+      <p class="depo-text">Em 4 meses de PixelGames lancei meu primeiro jogo na Steam e já recuperei o investimento do curso. A qualidade do conteúdo é absurda.</p>
+      <div class="depo-autor">
+        <div class="depo-avatar">👾</div>
+        <div>
+          <div class="depo-nome">Mateus Souza</div>
+          <div class="depo-cargo">Indie Dev · São Paulo</div>
+        </div>
+      </div>
+    </div>
+    <div class="depo-card fade-in">
+      <p class="depo-text">Nunca tinha programado na vida. Hoje trabalho numa empresa de games como junior developer. A trilha Indie Completo mudou minha vida.</p>
+      <div class="depo-autor">
+        <div class="depo-avatar">🎮</div>
+        <div>
+          <div class="depo-nome">Ana Lima</div>
+          <div class="depo-cargo">Junior Dev · Curitiba</div>
+        </div>
+      </div>
+    </div>
+    <div class="depo-card fade-in">
+      <p class="depo-text">Fiz vários cursos online e nenhum chegou perto da PixelGames. O Discord da comunidade sozinho já vale o preço. Recomendo demais!</p>
+      <div class="depo-autor">
+        <div class="depo-avatar">🚀</div>
+        <div>
+          <div class="depo-nome">Lucas Fernandes</div>
+          <div class="depo-cargo">Game Designer · Recife</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="fade-in">
+    <h2 class="cta-title">Pronto para<br><span>iniciar sua jornada?</span></h2>
+    <p class="cta-sub">Receba novidades, cupons e aulas gratuitas direto no seu e-mail.</p>
+    <div class="cta-form">
+      <input type="email" class="cta-input" placeholder="seu@email.com" id="emailInput"/>
+      <button class="cta-submit" onclick="handleSubmit()">ENTRAR</button>
+    </div>
+    <div id="form-msg" style="margin-top:16px;color:var(--neon-green);font-family:'Press Start 2P',monospace;font-size:9px;display:none;">
+      ✓ VOCÊ ENTROU NA LISTA!
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a href="#" class="footer-logo">PIXEL<span>GAMES</span></a>
+  <div class="footer-links">
+    <a href="#">Sobre</a>
+    <a href="#">Blog</a>
+    <a href="#">Afiliados</a>
+    <a href="#">Suporte</a>
+  </div>
+  <span class="footer-copy">© 2025 PixelGames. Feito com ❤️ e muito café.</span>
+</footer>
+
+<script>
+  // CURSOR
+  const cursor = document.getElementById('cursor');
+  const trail = document.getElementById('cursor-trail');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+    trail.style.left = e.clientX + 'px';
+    trail.style.top = e.clientY + 'px';
+  });
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.style.transform = 'translate(-50%,-50%) scale(2)';
+      cursor.style.background = 'var(--neon-cyan)';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+      cursor.style.background = 'transparent';
+    });
+  });
+
+  // STARS
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  for (let i = 0; i < 120; i++) {
+    stars.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: Math.random() * 2,
+      speed: Math.random() * 0.3 + 0.05,
+      opacity: Math.random()
+    });
+  }
+  function drawStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      ctx.fillStyle = `rgba(0,245,255,${s.opacity * 0.6})`;
+      ctx.fillRect(s.x, s.y, s.size, s.size);
+      s.y += s.speed;
+      if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
+    });
+    requestAnimationFrame(drawStars);
+  }
+  drawStars();
+
+  // COUNTER ANIMATION
+  function animateCounter(el, target, suffix = '') {
+    let current = 0;
+    const step = target / 60;
+    const interval = setInterval(() => {
+      current += step;
+      if (current >= target) { current = target; clearInterval(interval); }
+      el.textContent = Math.floor(current).toLocaleString('pt-BR') + suffix;
+    }, 25);
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+  // Stats observer
+  const statsObs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const nums = entry.target.querySelectorAll('.stat-number');
+        nums.forEach(n => {
+          const t = parseInt(n.dataset.target);
+          const suffix = n.dataset.target === '98' ? '%' : (n.dataset.target === '12400' ? '+' : '');
+          animateCounter(n, t, suffix);
+        });
+        statsObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  statsObs.observe(document.querySelector('.stats-bar'));
+
+  // EMAIL FORM
+  function handleSubmit() {
+    const email = document.getElementById('emailInput').value;
+    if (!email || !email.includes('@')) {
+      document.getElementById('emailInput').style.borderColor = 'var(--neon-pink)';
+      return;
+    }
+    document.getElementById('emailInput').style.borderColor = 'var(--neon-green)';
+    document.getElementById('form-msg').style.display = 'block';
+  }
+
+  // CURSO CARDS hover sound effect (visual pulse)
+  document.querySelectorAll('.curso-card').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      card.style.boxShadow = `0 20px 60px rgba(0,0,0,0.4)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.boxShadow = '';
+    });
+  });
+
+  // SMOOTH NAV
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+</script>
+</body>
+</html>
